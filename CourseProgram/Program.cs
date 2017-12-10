@@ -7,7 +7,7 @@ namespace CourseProgram
         static void Main(string[] args)
         {
             var parser = new Parser(new System.IO.StreamReader("course.html"));
-            parser.GetWeeks();
+            var weeks = parser.GetWeeks();
             Console.WriteLine("Hello World!");
         }
     }
