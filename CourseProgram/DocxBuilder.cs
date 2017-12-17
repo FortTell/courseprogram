@@ -9,30 +9,29 @@ namespace CourseProgram
 {
     public static class DocxBuilder
     {
-        public static DocX BuildDocx(string url)
+        public static void BuildDocx(string url)
         {
             using (var r = new StreamReader(HttpWebRequest.Create(url).GetResponse().GetResponseStream()))
-                return BuildDocx(r);
+                BuildDocx(r);
         }
-        public static DocX BuildDocx(StreamReader reader)
+        public static void BuildDocx(StreamReader reader)
         {
             var parser = new CourseraParser(reader);
             var courseName = parser.GetCourseName();
 
-            if (!Directory.Exists("\\out"))
-                Directory.CreateDirectory("\\out");
+            if (!Directory.Exists("out"))
+                Directory.CreateDirectory("out");
 
             using (var d = DocX.Create("out\\" + courseName + ".docx"))
             {
-                var nameP = d.InsertParagraph()
-                    .FontSize(14).Bold().Font(new Font("Arial"));
+                var nameP = d.InsertParagraph();
                 nameP.Alignment = Alignment.center;
-                nameP.Append(courseName + "\n\n" + "123");
+                nameP.Append(courseName + new String('\n', 5))
+                    .FontSize(14).Bold().Font(new Font("Arial"));
                 
-                //var teachers = parser.GetTeachers();
+                var teachers = parser.GetTeachers();
                 d.Save();
             }
-            throw new NotImplementedException();
         }
     }
 }
