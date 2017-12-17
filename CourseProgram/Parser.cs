@@ -1,38 +1,86 @@
-﻿using System;
+﻿using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Text;
 using System.IO;
-using HtmlAgilityPack;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace CourseProgram
 {
-    public class Parser
+    public class CourseraParser
     {
-        HtmlDocument document = new HtmlDocument();
+        #region Regexes
         Regex weekRe = new Regex(@"WEEK \d+");
         Regex weekContentRe = new Regex(@"\d+ videos.*");
-        Regex titleRe = new Regex("[а-я][А-Я]");
+        Regex titleSplitRe = new Regex("[а-я][А-Я]");
+        Regex degreeRe = new Regex(@"([Дд]октор)|([Кк]андидат).*наук");
+        #endregion
 
-        public Parser(StreamReader stream)
+        HtmlDocument document;
+        public CourseraParser(StreamReader stream)
         {
+            document = new HtmlDocument();
             document.Load(stream);
+        }
+
+        public string GetCourseDesc()
+        {
+            var about = document.DocumentNode.SelectSingleNode(@".//*[@class = 'body-1-text course-description']");
+            return about.InnerText;
+        }
+
+        public List<TeacherInfo> GetTeachers()
+        {
+            var teachers = document.DocumentNode.SelectNodes(".//*[contains(@class,'instructor-info')]");
+            var teacherInfo = ParseTeacherInfo(teachers);
+            return teacherInfo;
+        }
+
+        private List<TeacherInfo> ParseTeacherInfo(HtmlNodeCollection teacherNodes)
+        {
+            var result = new List<TeacherInfo>();
+            foreach (var node in teacherNodes)
+            {
+                var ti = ParseNamePositionAndDegree(node);
+                ti.department = node.LastChild.InnerText;
+                result.Add(ti);
+            }
+            return result;
+        }
+
+        private TeacherInfo ParseNamePositionAndDegree(HtmlNode node)
+        {
+            var npd = node.FirstChild.LastChild.InnerText
+                                .Replace("&nbsp;", "")
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(x => x.TrimStart())
+                                .ToList<string>();
+            var ti = new TeacherInfo { name = npd[0] };
+            if (npd.Count == 1)
+                return ti;
+            for (int i = 1; i < npd.Count; i++)
+            {
+                if (degreeRe.Match(npd[i]).Success)
+                    ti.degree += (npd[i].ToLower() + (ti.degree == null ? "" : ", "));
+                else
+                    ti.position = npd[i];
+            }
+            return ti;
         }
 
         public Dictionary<string, string> GetWeeks()
         {
             var weeks = document.DocumentNode.SelectNodes(@".//*[@class = 'week']");
-            List<string> weekInfos = GetWeekInfosLinq(weeks);
+            List<string> weekInfosRaw = GetWeekInfosLinq(weeks);
 
             //List<string> weekInfos = GetWeekInfosSimple(weeks);
-            var dict = new Dictionary<string, string>();
-            foreach (var wi in weekInfos)
+            var weekInfo = new Dictionary<string, string>();
+            foreach (var wi in weekInfosRaw)
             {
-                var titleMatch = titleRe.Match(wi);
-                dict.Add(wi.Substring(0, titleMatch.Index + 1), wi.Substring(titleMatch.Index + 1));
+                var titleMatch = titleSplitRe.Match(wi);
+                weekInfo.Add(wi.Substring(0, titleMatch.Index + 1), wi.Substring(titleMatch.Index + 1));
             }
-            return dict;
+            return weekInfo;
         }
 
         private List<string> GetWeekInfosSimple(HtmlNodeCollection weeks)
