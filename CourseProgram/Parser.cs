@@ -23,10 +23,20 @@ namespace CourseProgram
             document.Load(stream);
         }
 
+        public string GetCourseName()
+        {
+            var name = document.DocumentNode.SelectSingleNode("/html/head/meta[@property = 'og:title']")
+                .GetAttributeValue("content", "")
+                .Split(" (")[0];
+            return name;
+        }
+
         public string GetCourseDesc()
         {
-            var about = document.DocumentNode.SelectSingleNode(@".//*[@class = 'body-1-text course-description']");
-            return about.InnerText;
+            var about = document.DocumentNode.SelectSingleNode(".//*[@class = 'body-1-text course-description']")
+                .InnerText
+                .Split(": ")[1];
+            return about;
         }
 
         public List<TeacherInfo> GetTeachers()
@@ -63,14 +73,14 @@ namespace CourseProgram
                 if (degreeRe.Match(npd[i]).Success)
                     ti.degree += (npd[i].ToLower() + (ti.degree == null ? "" : ", "));
                 else
-                    ti.position = npd[i];
+                    ti.position += (npd[i] + (ti.position == null ? "" : ", "));
             }
             return ti;
         }
 
         public Dictionary<string, string> GetWeeks()
         {
-            var weeks = document.DocumentNode.SelectNodes(@".//*[@class = 'week']");
+            var weeks = document.DocumentNode.SelectNodes(".//*[@class = 'week']");
             List<string> weekInfosRaw = GetWeekInfosLinq(weeks);
 
             //List<string> weekInfos = GetWeekInfosSimple(weeks);
