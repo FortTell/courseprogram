@@ -1,5 +1,7 @@
-﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Parsing;
+using DocxBuilder;
+using CourseProgram;
 
 namespace UnitTests
 {
