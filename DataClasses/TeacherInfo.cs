@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Parsing
+namespace DataClasses
 {
     public struct TeacherInfo
     {

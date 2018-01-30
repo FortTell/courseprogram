@@ -5,11 +5,12 @@ using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Text;
+using DataClasses;
 
 
 namespace DocxBuilder
 {
-    public static class DocxBuilder
+    public static class Builder
     {
         public static void BuildDocx(ParseInfo pi)
         {

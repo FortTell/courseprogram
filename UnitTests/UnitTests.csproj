@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CourseProgram\CourseProgram.csproj" />
+    <ProjectReference Include="..\DataClasses\DataClasses.csproj" />
     <ProjectReference Include="..\DocxBuilder\DocxBuilder.csproj" />
     <ProjectReference Include="..\Parsing\Parsing.csproj" />
   </ItemGroup>
