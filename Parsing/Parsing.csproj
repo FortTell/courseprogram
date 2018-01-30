@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.6.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="tests\course.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="ChangeAliasesOfSystemDrawing" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
+	<ItemGroup>
+	  <ReferencePath Condition="'%(FileName)' == 'System.Drawing-dotnet-core'">
+		<Aliases>SystemDrawing</Aliases>
+	  </ReferencePath>
+	</ItemGroup>
+  </Target>
+</Project>

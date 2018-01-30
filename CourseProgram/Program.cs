@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Parsing;
+using System;
 using System.IO;
+using DocxBuilder;
+using System.Collections.Generic;
 
 namespace CourseProgram
 {
@@ -7,13 +10,16 @@ namespace CourseProgram
     {
         static void Main(string[] args)
         {
-            /*var parser = new CourseraParser(new System.IO.StreamReader("tests\\course.html"));
-            var weeks = parser.GetWeeks();
-            var about = parser.GetCourseDesc();
-            var teachers = parser.GetTeachers();
-            var courseName = parser.GetCourseName();*/
-            DocxBuilder.BuildDocx(new StreamReader("tests\\course.html"));
             Console.WriteLine("Hello World!");
+            BuildDocx(new StreamReader("tests\\course.html"));
+        }
+
+        public static void BuildDocx(StreamReader reader)
+        {
+            var parser = new CourseraParser(reader);
+            var courseName = parser.GetCourseName();
+            var pi = new ParseInfo { courseName = courseName, teachers = new List<string> { "", "" } };
+            DocxBuilder.DocxBuilder.BuildDocx(pi);
         }
     }
 }

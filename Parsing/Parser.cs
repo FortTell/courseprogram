@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace CourseProgram
+namespace Parsing
 {
     public class CourseraParser
     {
