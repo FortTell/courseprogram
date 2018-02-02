@@ -24,6 +24,17 @@ namespace Parsing
             document.Load(stream);
         }
 
+        public ParseInfo GetAllInfo()
+        {
+            return new ParseInfo
+            {
+                courseName = GetCourseName(),
+                courseDesc = GetCourseDesc(),
+                teachers = GetTeachers(),
+                weeks = GetWeeks()
+            };
+        }
+
         public string GetCourseName()
         {
             var name = document.DocumentNode.SelectSingleNode("/html/head/meta[@property = 'og:title']")

@@ -15,7 +15,7 @@ namespace CourseProgram
             //BuildDocx(new StreamReader("tests\\course.html"));
         }
 
-        public static void BuildDocx(StreamReader reader)
+        public static void MakeDocx(StreamReader reader)
         {
             var parser = new CourseraParser(reader);
             var courseName = parser.GetCourseName();

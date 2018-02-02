@@ -7,6 +7,8 @@ namespace DataClasses
     public struct ParseInfo
     {
         public string courseName;
+        public string courseDesc;
         public List<TeacherInfo> teachers;
+        public Dictionary<string, string> weeks;
     }
 }

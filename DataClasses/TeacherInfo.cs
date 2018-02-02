@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace DataClasses
@@ -10,7 +11,10 @@ namespace DataClasses
 
         public override string ToString()
         {
-            return String.Join(", ", name, degree, position, department);
+            return String.Join(", ", 
+                new[] { name, degree, position, department }
+                    .Where(x => x != "" && x != null)
+            );
         }
     }
 }
