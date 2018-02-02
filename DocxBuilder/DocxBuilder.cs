@@ -12,6 +12,8 @@ namespace DocxBuilder
 {
     public static class Builder
     {
+        public static Dictionary<string, string> TemplateReplacements { get; private set; }
+
         public static void BuildDocx(ParseInfo pi)
         {
             if (!Directory.Exists("out"))
@@ -26,9 +28,9 @@ namespace DocxBuilder
                 var teachers = pi.teachers;
                 var teacherT = d.InsertTable(2, 6);
                 foreach (TableBorderType borderType in Enum.GetValues(typeof(TableBorderType)))
-                    teacherT.SetBorder(borderType, 
+                    teacherT.SetBorder(borderType,
                         new Border(BorderStyle.Tcbs_single, BorderSize.one, 1, Color.Black));
-                
+
                 d.Save();
             }
         }
@@ -37,17 +39,22 @@ namespace DocxBuilder
         {
             if (!Directory.Exists("out"))
                 Directory.CreateDirectory("out");
+            TemplateReplacements = new Dictionary<string, string>
+            {
+                { "<COURSE_NAME>", pi.courseName },
+                { "<YEAR>", DateTime.Now.Year.ToString()},
+                { "<CITY>", "Екатеринбург" },
+                { "<NAME>", "Иванов И.И." },
+                { "<POSITION>", "Искатель интересных историй" },
+                { "<UNIVERSITY_NAME>", "ВУЗ им. Иванова И.И." }
+            };
+
             using (var d = DocX.Load("template.docx"))
             {
-                var paragraphs = d.Paragraphs;
-                foreach(var p in paragraphs)
-                {
-                    p.ReplaceText("<COURSE_NAME>", pi.courseName);
-                    p.ReplaceText("<YEAR>", DateTime.Now.Year.ToString());
-                    p.ReplaceText("<CITY>", "Екатеринбург");
-                    p.ReplaceText("<NAME>", "Иванов И.И.");
-                    p.ReplaceText("<UNIVERSITY_NAME>", "ВУЗ им. Иванова И.И.");
-                }
+                var paragraphs = d.Paragraphs.Where(p => p.Text != "");
+                foreach (var p in paragraphs)
+                    foreach (var repl in TemplateReplacements)
+                        p.ReplaceText(repl.Key, repl.Value);
                 d.SaveAs("out\\" + pi.courseName + ".docx");
             }
         }

@@ -47,12 +47,18 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void NameEndingWithSemicolonWorks()
+        public void NameDoesNotEndInASemicolon()
         {
             var parser = new CourseraParser(new StreamReader("tests\\endingSemicolon.html"));
             var teachers = parser.GetTeachers();
             foreach (var t in teachers)
                 Assert.IsTrue(t.ToString().Last() != ',');
+        }
+
+        [TestMethod]
+        public void BracketsInNamesAreHandled()
+        {
+            var parser = new CourseraParser(new StreamReader("tests\\bracketedNames.html"));
         }
     }
 }
