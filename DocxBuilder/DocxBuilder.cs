@@ -6,7 +6,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using DataClasses;
-
+using System.Linq;
 
 namespace DocxBuilder
 {
@@ -16,7 +16,6 @@ namespace DocxBuilder
         {
             if (!Directory.Exists("out"))
                 Directory.CreateDirectory("out");
-
             using (var d = DocX.Create("out\\" + pi.courseName + ".docx"))
             {
                 var nameP = d.InsertParagraph();
@@ -31,6 +30,25 @@ namespace DocxBuilder
                         new Border(BorderStyle.Tcbs_single, BorderSize.one, 1, Color.Black));
                 
                 d.Save();
+            }
+        }
+
+        public static void BuildDocxFromTemplate(ParseInfo pi)
+        {
+            if (!Directory.Exists("out"))
+                Directory.CreateDirectory("out");
+            using (var d = DocX.Load("template.docx"))
+            {
+                var paragraphs = d.Paragraphs;
+                foreach(var p in paragraphs)
+                {
+                    p.ReplaceText("<COURSE_NAME>", pi.courseName);
+                    p.ReplaceText("<YEAR>", DateTime.Now.Year.ToString());
+                    p.ReplaceText("<CITY>", "Екатеринбург");
+                    p.ReplaceText("<NAME>", "Иванов И.И.");
+                    p.ReplaceText("<UNIVERSITY_NAME>", "ВУЗ им. Иванова И.И.");
+                }
+                d.SaveAs("out\\" + pi.courseName + ".docx");
             }
         }
     }

@@ -12,15 +12,16 @@ namespace CourseProgram
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            //BuildDocx(new StreamReader("tests\\course.html"));
+            MakeDocx(new StreamReader("course.html"));
         }
 
         public static void MakeDocx(StreamReader reader)
         {
             var parser = new CourseraParser(reader);
             var courseName = parser.GetCourseName();
-            var pi = new ParseInfo { courseName = courseName, teachers = parser.GetTeachers() };
-            Builder.BuildDocx(pi);
+            var pi = parser.ParseAllInfo();
+            //            Builder.BuildDocx(pi);
+            Builder.BuildDocxFromTemplate(pi);
         }
     }
 }

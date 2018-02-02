@@ -24,7 +24,7 @@ namespace Parsing
             document.Load(stream);
         }
 
-        public ParseInfo GetAllInfo()
+        public ParseInfo ParseAllInfo()
         {
             return new ParseInfo
             {
