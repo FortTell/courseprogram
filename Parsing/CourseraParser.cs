@@ -18,7 +18,7 @@ namespace Parsing
         #endregion
 
         HtmlDocument document;
-        public CourseraParser(StreamReader stream)
+        public CourseraParser(Stream stream)
         {
             document = new HtmlDocument();
             document.Load(stream);

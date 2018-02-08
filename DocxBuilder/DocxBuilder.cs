@@ -35,10 +35,25 @@ namespace DocxBuilder
             }
         }
 
-        public static void BuildDocxFromTemplate(ParseInfo pi)
+        public static void BuildDocxFromTemplate(ParseInfo pi, string templateFilename)
         {
             if (!Directory.Exists("out"))
                 Directory.CreateDirectory("out");
+            LoadReplacements(pi);
+
+            using (var d = DocX.Load(templateFilename))
+            {
+                var paragraphs = d.Paragraphs.Where(p => p.Text != "");
+                foreach (var p in paragraphs)
+                    foreach (var repl in TemplateReplacements)
+                        p.ReplaceText(repl.Key, repl.Value);
+                d.SaveAs("out\\" + pi.courseName + ".docx");
+            }
+        }
+
+        private static void LoadReplacements(ParseInfo pi)
+        {
+
             TemplateReplacements = new Dictionary<string, string>
             {
                 { "<COURSE_NAME>", pi.courseName },
@@ -48,15 +63,6 @@ namespace DocxBuilder
                 { "<POSITION>", "Искатель интересных историй" },
                 { "<UNIVERSITY_NAME>", "ВУЗ им. Иванова И.И." }
             };
-
-            using (var d = DocX.Load("template.docx"))
-            {
-                var paragraphs = d.Paragraphs.Where(p => p.Text != "");
-                foreach (var p in paragraphs)
-                    foreach (var repl in TemplateReplacements)
-                        p.ReplaceText(repl.Key, repl.Value);
-                d.SaveAs("out\\" + pi.courseName + ".docx");
-            }
         }
     }
 }

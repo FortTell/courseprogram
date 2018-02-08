@@ -19,7 +19,7 @@ namespace UnitTests
         [TestInitialize]
         public void ParserInit()
         {
-            mainParser = new CourseraParser(new StreamReader("tests\\course.html"));
+            mainParser = new CourseraParser(File.OpenRead("tests\\course.html"));
         }
 
         [TestMethod]
@@ -49,7 +49,7 @@ namespace UnitTests
         [TestMethod]
         public void NameDoesNotEndInASemicolon()
         {
-            var parser = new CourseraParser(new StreamReader("tests\\endingSemicolon.html"));
+            var parser = new CourseraParser(File.OpenRead("tests\\endingSemicolon.html"));
             var teachers = parser.GetTeachers();
             foreach (var t in teachers)
                 Assert.IsTrue(t.ToString().Last() != ',');
@@ -58,7 +58,14 @@ namespace UnitTests
         [TestMethod]
         public void BracketsInNamesAreHandled()
         {
-            var parser = new CourseraParser(new StreamReader("tests\\bracketedNames.html"));
+            var parser = new CourseraParser(File.OpenRead("tests\\bracketedNames.html"));
+            Assert.Fail();
+        }
+
+        [TestMethod]
+        public void PerformanceTest()
+        {
+            Program.MakeDocx(File.OpenRead("tests\\course.html"));
         }
     }
 }
