@@ -6,12 +6,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="~%24mpetence.docx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Parsing\Parsing.csproj" />
     <ProjectReference Include="..\DocxBuilder\DocxBuilder.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="course.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="disc_template.docx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="template.docx">
