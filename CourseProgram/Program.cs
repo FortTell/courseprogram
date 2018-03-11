@@ -12,7 +12,9 @@ namespace CourseProgram
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            MakeDocx(File.OpenRead("course.html"));
+            GSheetParser.ConnectToSheet();
+            Console.ReadLine();
+            //MakeDocx(File.OpenRead("course.html"));
         }
 
         public static void MakeDocx(Stream reader)

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using DataClasses;
 
+
 namespace Parsing
 {
     public class CourseraParser
@@ -31,7 +32,7 @@ namespace Parsing
                 courseName = GetCourseName(),
                 courseDesc = GetCourseDesc(),
                 teachers = GetTeachers(),
-                weeks = GetWeeks()
+                themes = GetThemes()
             };
         }
 
@@ -45,9 +46,10 @@ namespace Parsing
 
         public string GetCourseDesc()
         {
-            var about = document.DocumentNode.SelectSingleNode(".//*[@class = 'body-1-text course-description']")
-                .InnerText
-                .Split(": ")[1];
+            var about = document.DocumentNode
+                .SelectSingleNode(".//*[@class = 'about-section-wrapper']" +
+                "//*[@class = 'body-1-text course-description']/text()")
+                .InnerText;
             return about;
         }
 
@@ -90,44 +92,34 @@ namespace Parsing
             return ti;
         }
 
-        public Dictionary<string, string> GetWeeks()
+        public List<(string title, List<string> topics)> GetThemes()
         {
             var weeks = document.DocumentNode.SelectNodes(".//*[@class = 'week']");
-            List<string> weekInfosRaw = GetWeekInfosLinq(weeks);
-
-            //List<string> weekInfos = GetWeekInfosSimple(weeks);
-            var weekInfo = new Dictionary<string, string>();
-            foreach (var wi in weekInfosRaw)
+            var weekInfosRaw = GetWeekInfosLinq(weeks);
+            var maxToCompress = weekInfosRaw.Count - 5;
+            var totalHeaderLength = weekInfosRaw.Select(k => k.title.Length).Sum();
+            int i = 0;
+            while (maxToCompress > 0)
             {
-                var titleMatch = titleSplitRe.Match(wi);
-                weekInfo.Add(wi.Substring(0, titleMatch.Index + 1), wi.Substring(titleMatch.Index + 1));
+                while (maxToCompress > 0 && weekInfosRaw[i].title.Length < totalHeaderLength / 5)
+                {
+                    maxToCompress--;
+                    weekInfosRaw[i] = (weekInfosRaw[i].title + ". " + weekInfosRaw[i + 1].title,
+                        weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
+                    weekInfosRaw.RemoveAt(i + 1);
+                }
+                i++;
             }
-            return weekInfo;
+            return weekInfosRaw;
         }
 
-        private List<string> GetWeekInfosSimple(HtmlNodeCollection weeks)
-        {
-            var weekInfos = new List<string>();
-            foreach (var node in weeks)
-            {
-                Console.WriteLine(node.InnerText.Split("expand")[0]);
-                var info = node.InnerText.Split("expand")[0];
-                var weekMatch = weekRe.Match(info);
-                var weekContentMatch = weekContentRe.Match(info);
-                if (weekContentMatch.Success)
-                    weekInfos.Add(info.Substring(weekMatch.Index + weekMatch.Length, weekContentMatch.Index - (weekMatch.Index + weekMatch.Length)));
-                else
-                    weekInfos.Add(info.Substring(weekMatch.Index + weekMatch.Length));
-            }
-            return weekInfos;
-        }
-
-        private List<string> GetWeekInfosLinq(HtmlNodeCollection weeks)
+        private List<(string title, List<string> topics)> GetWeekInfosLinq(HtmlNodeCollection weeks)
         {
             return weeks
-                .Select(w => w.InnerText.Split("expand")[0])
-                .Select(w => w.Substring(weekRe.Match(w).Index + weekRe.Match(w).Length))
-                .Select(w => weekContentRe.Match(w).Success ? w.Substring(0, weekContentRe.Match(w).Index) : w)
+                .Select(w => w.LastChild.LastChild)
+                .Select(w => (w.ChildNodes[0].InnerText, 
+                    w.ChildNodes[1].InnerText.Split("More")[0]
+                    .Replace('\t', ' ').Split(". ").ToList()))
                 .ToList();
         }
     }

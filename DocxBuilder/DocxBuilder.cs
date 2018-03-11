@@ -70,17 +70,42 @@ namespace DocxBuilder
             SetTableBorder(educResTable);
         }
 
+        private static void BuildDiscContentTable(DocX template, ParseInfo pi)
+        {
+            var rnd = new Random();
+            var dcTable = template.Tables[8];
+            for (int i = 0; i < 5; i++)
+            {
+                dcTable.InsertRow();
+                var row = dcTable.Rows[i + 1];
+                row.Cells[0].Paragraphs[0].Alignment = Alignment.center;
+                row.Cells[0].Paragraphs[0].Append((i + 1).ToString());
+                var para = row.Cells[1].Paragraphs[0];
+                para.Append(pi.themes[i].title + (pi.themes[i].title.EndsWith('.') ? "" : "."));
+                var topics = pi.themes[i].topics.ToList();
+                for (int k = 0; k < topics.Count / 5.0; k++)
+                {
+                    var topic = topics[rnd.Next(0, topics.Count)];
+                    row.Cells[2].Paragraphs[0].Append(topic + (topic.EndsWith('.') ? " " : ". "));
+                    topics.Remove(topic);
+                }
+            }
+        }
+
+
+
         public static void BuildDocxFromTemplate(ParseInfo pi, string templateFilename)
         {
             if (!Directory.Exists("out"))
                 Directory.CreateDirectory("out");
             LoadReplacements(pi);
-                
+
 
             using (var d = DocX.Load(templateFilename))
             {
                 d.InsertDocument(DocX.Load("disc_template.docx"));
                 FillEducResults(d);
+                BuildDiscContentTable(d, pi);
                 var paragraphs = d.Paragraphs.Where(p => p.Text != "");
                 foreach (var p in paragraphs)
                     foreach (var repl in TemplateReplacements)
@@ -94,7 +119,7 @@ namespace DocxBuilder
 
             TemplateReplacements = new Dictionary<string, string>
             {
-                { "<COURSE_NAME>", pi.courseName },
+                { "<MODULE_NAME>", pi.courseName },
                 { "<DISC_NAME>", pi.courseName }, //no support for multi-discipline modules yet
                 { "<YEAR>", DateTime.Now.Year.ToString()},
                 { "<CITY>", "Екатеринбург" },
