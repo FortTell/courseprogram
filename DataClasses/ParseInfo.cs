@@ -10,5 +10,6 @@ namespace DataClasses
         public string courseDesc;
         public List<TeacherInfo> teachers;
         public List<(string title, List<string> topics)> themes;
+        public int moduleZe;
     }
 }

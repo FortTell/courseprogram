@@ -25,14 +25,15 @@ namespace Parsing
             document.Load(stream);
         }
 
-        public ParseInfo ParseAllInfo()
+        public ParseInfo ParseInfoFromWebpage()
         {
             return new ParseInfo
             {
                 courseName = GetCourseName(),
                 courseDesc = GetCourseDesc(),
                 teachers = GetTeachers(),
-                themes = GetThemes()
+                themes = GetThemes(),
+                moduleZe = 3
             };
         }
 
