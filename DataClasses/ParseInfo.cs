@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace DataClasses
 {
     public struct ParseInfo
     {
-        public string courseName;
-        public string courseDesc;
-        public List<TeacherInfo> teachers;
-        public List<(string title, List<string> topics)> themes;
-        public int moduleZe;
+        public string CourseName;
+        public string CourseDesc;
+        public List<TeacherInfo> Teachers;
+        //public List<(string title, List<string> topics)> Themes;
+        public List<DisciplineInfo> Disciplines;
+        public int ModuleZe { get => Disciplines.Select(d => d.Ze).Sum(); }
     }
 }

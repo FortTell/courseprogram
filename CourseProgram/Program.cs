@@ -23,9 +23,8 @@ namespace CourseProgram
             var courseName = parser.GetCourseName();
             var pi = parser.ParseInfoFromWebpage();
             var gParser = new GSheetParser();
-            gParser.PasteParseInfoToSheet(pi);
-            //            Builder.BuildDocx(pi);
-            Builder.BuildDocxFromTemplate(pi, "template.docx");
+            gParser.PasteParseInfoToSheet(pi, 0);
+            Builder.BuildDocxFromTemplate(gParser.ParseInfoFromSheet(), "template.docx");
         }
     }
 }

@@ -16,6 +16,7 @@ namespace Parsing
         Regex weekContentRe = new Regex(@"\d+ videos.*");
         Regex titleSplitRe = new Regex("[а-я][А-Я]");
         Regex degreeRe = new Regex(@"([Дд]октор)|([Кк]андидат).*наук");
+        Regex attestRe = new Regex(@"([Зз]ач[её]т)|([Ээ]кзамен)");
         #endregion
 
         HtmlDocument document;
@@ -29,11 +30,12 @@ namespace Parsing
         {
             return new ParseInfo
             {
-                courseName = GetCourseName(),
-                courseDesc = GetCourseDesc(),
-                teachers = GetTeachers(),
-                themes = GetThemes(),
-                moduleZe = 3
+                CourseName = GetCourseName(),
+                CourseDesc = GetCourseDesc(),
+                Teachers = GetTeachers(),
+                Disciplines = new List<DisciplineInfo> {
+                    new DisciplineInfo { Name = GetCourseName(), Ze = 3, Themes = GetThemes() }
+                }
             };
         }
 
@@ -100,15 +102,12 @@ namespace Parsing
             var maxToCompress = weekInfosRaw.Count - 5;
             var totalHeaderLength = weekInfosRaw.Select(k => k.title.Length).Sum();
             int i = 0;
-            while (maxToCompress > 0)
+            while (maxToCompress > 0 && weekInfosRaw[i].title.Length < totalHeaderLength / 5)
             {
-                while (maxToCompress > 0 && weekInfosRaw[i].title.Length < totalHeaderLength / 5)
-                {
-                    maxToCompress--;
-                    weekInfosRaw[i] = (weekInfosRaw[i].title + ". " + weekInfosRaw[i + 1].title,
-                        weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
-                    weekInfosRaw.RemoveAt(i + 1);
-                }
+                maxToCompress--;
+                weekInfosRaw[i] = (weekInfosRaw[i].title + ". " + weekInfosRaw[i + 1].title,
+                    weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
+                weekInfosRaw.RemoveAt(i + 1);
                 i++;
             }
             return weekInfosRaw;
@@ -118,9 +117,10 @@ namespace Parsing
         {
             return weeks
                 .Select(w => w.LastChild.LastChild)
-                .Select(w => (w.ChildNodes[0].InnerText, 
+                .Select(w => (w.ChildNodes[0].InnerText,
                     w.ChildNodes[1].InnerText.Split("More")[0]
                     .Replace('\t', ' ').Split(". ").ToList()))
+                .Where(tup => !(attestRe.IsMatch(tup.Item1))).ToList()
                 .ToList();
         }
     }

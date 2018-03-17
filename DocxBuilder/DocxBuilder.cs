@@ -13,11 +13,12 @@ namespace DocxBuilder
     public static class Builder
     {
         public static Dictionary<string, string> TemplateReplacements { get; private set; }
+        public static int TablesInDiscTempl = 10;
 
-        private static void FillEducResults(DocX template)
+        private static void FillEducResults(DocX template, int discId)
         {
-            FillModuleEducResTable(template.Tables[3]);
-            FillCompetByDiscTable(template);  
+            FillModuleEducResTable(template.Tables[3 + TablesInDiscTempl * discId]);
+            FillCompetByDiscTable(template, discId);  
         }
 
         private static void FillModuleEducResTable(Table educResTable)
@@ -54,10 +55,10 @@ namespace DocxBuilder
                 SetTableBorder(educResTable);
             }
         }
-        private static void FillCompetByDiscTable(DocX template)
+        private static void FillCompetByDiscTable(DocX template, int discId)
         {
-            var erTable = template.Tables[3];
-            var cbdTable = template.Tables[4];
+            var erTable = template.Tables[3 + TablesInDiscTempl * discId];
+            var cbdTable = template.Tables[4 + TablesInDiscTempl * discId];
             var competences = erTable.Rows.Skip(1).SelectMany(r => r.Cells[2].Paragraphs)
                 .OrderBy(p => p.Text.Split('-')[0])
                 .ThenBy(p => int.Parse(p.Text.Split(new char[] { '-', ' ' })[1]))
@@ -68,17 +69,15 @@ namespace DocxBuilder
                 cbdTable.InsertColumn();
                 cbdTable.Rows[0].Cells[1 + i].Paragraphs[0].Append(competCodes[i]).Bold();
                 cbdTable.Rows[1].Cells[2 + i].Paragraphs[0].Append("*").Bold().Alignment = Alignment.center;
-                template.Lists[4].Items[2].AppendLine(competences[i].Text).FontSize(12);
+                template.Lists[4].Items[2].AppendLine(competences[i].Text).FontSize(12); //*///
             }
             SetTableBorder(cbdTable);
-
-            
         }
-
-        private static void FillDiscContentTable(DocX template, ParseInfo pi)
+        private static void FillDiscContentTable(DocX template, ParseInfo pi, int discId)
         {
             var rnd = new Random();
-            var dcTable = template.Tables[9];
+            var disc = pi.Disciplines[discId];
+            var dcTable = template.Tables[9 + TablesInDiscTempl * discId];
             for (int i = 0; i < 5; i++)
             {
                 dcTable.InsertRow();
@@ -86,8 +85,8 @@ namespace DocxBuilder
                 row.Cells[0].Paragraphs[0].Alignment = Alignment.center;
                 row.Cells[0].Paragraphs[0].Append((i + 1).ToString());
                 var para = row.Cells[1].Paragraphs[0];
-                para.Append(pi.themes[i].title + (pi.themes[i].title.EndsWith('.') ? "" : "."));
-                var topics = pi.themes[i].topics.ToList();
+                para.Append(disc.Themes[i].title + (disc.Themes[i].title.EndsWith('.') ? "" : "."));
+                var topics = disc.Themes[i].topics.ToList();
                 for (int k = 0; k < topics.Count / 5.0; k++)
                 {
                     var topic = topics[rnd.Next(0, topics.Count)];
@@ -95,16 +94,17 @@ namespace DocxBuilder
                     topics.Remove(topic);
                 }
             }
-        } //table[9]
-        private static void FillHourSpreadTable(DocX template, ParseInfo pi)
+        }
+        private static void FillHourSpreadTable(DocX template, ParseInfo pi, int discId)
         {
-            var table = template.Tables[10];
-            for (int i = 1; i < pi.themes.Count; i++)
+            var table = template.Tables[10 + TablesInDiscTempl * discId];
+            var disc = pi.Disciplines[discId];
+            for (int i = 1; i < disc.Themes.Count; i++)
                 table.InsertRow(table.Rows[4], 4 + i);
             for (int i = 27; i <= 30; i++)
-                table.MergeCellsInColumn(i, 3, 3 + 1 + pi.themes.Count);
-            int totalHours = pi.moduleZe * 36;
-            bool isExam = true;
+                table.MergeCellsInColumn(i, 3, 3 + 1 + disc.Themes.Count);
+            int totalHours = disc.Ze * 36;
+            bool isExam = disc.IsExam;
             var hoursForSelfWork = totalHours - 34 - (isExam ? 18 : 4);
             AppendToCell(table, table.RowCount - 1, 2, totalHours.ToString(), 8);
             AppendToCell(table, table.RowCount - 2, 2, (totalHours - (isExam ? 18 : 4)).ToString(), 8);
@@ -116,13 +116,13 @@ namespace DocxBuilder
             AppendToCell(table, table.RowCount - 2, 7, hoursForSelfWork.ToString(), 8);
             AppendToCell(table, table.RowCount - 1, 5, hoursForSelfWork.ToString(), 8);
 
-            for (int i = 0; i < pi.themes.Count; i++)
+            for (int i = 0; i < disc.Themes.Count; i++)
             {
                 var row = table.Rows[4 + i];
                 AppendToCell(table, 4 + i, 0, (i + 1).ToString(), 8);
-                AppendToCell(table, 4 + i, 1, pi.themes[i].title, 8);
+                AppendToCell(table, 4 + i, 1, disc.Themes[i].title, 8);
             }
-        } //table[10]
+        }
         private static void ReplacePlaceholders(DocX template)
         {
             var paragraphs = template.Paragraphs.Where(p => p.Text != "");
@@ -139,12 +139,15 @@ namespace DocxBuilder
 
             using (var d = DocX.Load(templateFilename))
             {
-                d.InsertDocument(DocX.Load("disc_template.docx"));
-                FillEducResults(d);
-                FillDiscContentTable(d, pi);
-                FillHourSpreadTable(d, pi);
+                for (int i = 0; i < pi.Disciplines.Count; i++)
+                {
+                    d.InsertDocument(DocX.Load("disc_template.docx"));
+                    FillEducResults(d, i);
+                    FillDiscContentTable(d, pi, i);
+                    FillHourSpreadTable(d, pi, i);
+                }
                 ReplacePlaceholders(d);
-                d.SaveAs("out\\" + pi.courseName + ".docx");
+                d.SaveAs("out\\" + pi.CourseName + ".docx");
             }
         }
 
@@ -153,8 +156,8 @@ namespace DocxBuilder
 
             TemplateReplacements = new Dictionary<string, string>
             {
-                { "<MODULE_NAME>", pi.courseName },
-                { "<DISC_NAME>", pi.courseName }, //no support for multi-discipline modules yet
+                { "<MODULE_NAME>", pi.CourseName },
+                { "<DISC_NAME>", pi.CourseName }, //no support for multi-discipline modules yet
                 { "<YEAR>", DateTime.Now.Year.ToString()},
                 { "<CITY>", "Екатеринбург" },
                 { "<NAME>", "Иванов И.И." },

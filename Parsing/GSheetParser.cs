@@ -27,27 +27,49 @@ namespace Parsing
             Service = ConnectToSheetsSvc();
         }
 
-        public void PasteParseInfoToSheet(ParseInfo pi)
+        public void PasteParseInfoToSheet(ParseInfo pi, int discId)
         {
             var valuesToUpd = new List<ValueRange>();
-            var courseName = new List<IList<object>> { new List<object> { pi.courseName } };
+            var disc = pi.Disciplines[discId];
+            var courseName = new List<IList<object>> { new List<object> { pi.CourseName } };
             valuesToUpd.Add(PrepareVR(courseName, "page1!B1"));
             valuesToUpd.Add(PrepareVR(courseName, "page1!B3"));
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
-                { pi.themes.Select(t => t.title).ToList<object>()},
-                "page1!B7:" + (char)('B' + pi.themes.Count) + "7"));
+                { disc.Themes.Select(t => t.title).ToList<object>()},
+                "page1!B7:" + (char)('B' + disc.Themes.Count) + "7"));
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
-                { pi.themes.Select(t => String.Join(" ",t.topics)).ToList<object>() },
-                "page1!B8:" + (char)('B' + pi.themes.Count) + "8"));
-            var bur = new SpreadsheetsResource.ValuesResource.BatchUpdateRequest(Service, 
-                new BatchUpdateValuesRequest {
+                { disc.Themes.Select(t => String.Join(". ", t.topics)).ToList<object>() },
+                "page1!B8:" + (char)('B' + disc.Themes.Count) + "8"));
+            var bur = new SpreadsheetsResource.ValuesResource.BatchUpdateRequest(Service,
+                new BatchUpdateValuesRequest
+                {
                     Data = valuesToUpd,
                     ValueInputOption = "USER_ENTERED"
                 }, SpreadsheetId);
             bur.Execute();
         }
+        public ParseInfo ParseInfoFromSheet()
+        {
+            var di = GetValues("page1!B3:B6");
+            var dThemes = GetValues("page1!B7:F8");
+            var pi = new ParseInfo
+            {
+                CourseName = GetValues("page1!B1").Values[0][0].ToString(),
+                Disciplines = new List<DisciplineInfo> {
+                    new DisciplineInfo
+                    {
+                        Name = di.Values[0][0].ToString(),
+                        Ze = int.Parse(di.Values[1][0].ToString()),
+                        PracticeHours = int.Parse(di.Values[2][0].ToString()),
+                        IsExam = di.Values[3][0].ToString() == "Экзамен",
+                        Themes = GetThemeInfos(dThemes)
+                    }
+                }
+            };
+            return pi;
+        }
 
-        public static SheetsService ConnectToSheetsSvc()
+        public SheetsService ConnectToSheetsSvc()
         {
             GoogleCredential credential;
             string credPath = Path.Combine(new DirectoryInfo(System.Environment.CurrentDirectory).Parent.FullName, "Parsing");
@@ -67,6 +89,19 @@ namespace Parsing
             return service;
         }
 
+        public void HAX(ParseInfo pi)
+        {
+            var uspr = new UpdateDimensionPropertiesRequest();
+            uspr.Properties.PixelSize = pi.Disciplines[0].Themes[0].topics.Sum(t => t.Length + 2);
+            uspr.Range = new DimensionRange { Dimension = "ROWS", SheetId = 0, StartIndex = 1, EndIndex = 6 + 1 };
+        }
+
+        private List<(string, List<string>)> GetThemeInfos(ValueRange vr)
+        {
+            return vr.Values[0].Zip(vr.Values[1], 
+                (ti, to) => (ti.ToString(), to.ToString().Split(". ").ToList())).ToList();
+        }
+
         public ValueRange PrepareVR(List<IList<object>> updatedValues, string range, bool pasteInRows = true)
         {
             return new ValueRange
@@ -76,29 +111,22 @@ namespace Parsing
                 Range = range
             };
         }
-        public UpdateValuesResponse UpdateValues(List<IList<object>> updatedValues, string range, 
+        public UpdateValuesResponse UpdateValues(List<IList<object>> updatedValues, string range,
             bool pasteAsRaw = false, bool pasteInRows = true)
         {
             var vr = PrepareVR(updatedValues, range, pasteInRows);
             var updateReq = Service.Spreadsheets.Values.Update(vr, SpreadsheetId, range);
-            updateReq.ValueInputOption = pasteAsRaw ? 
+            updateReq.ValueInputOption = pasteAsRaw ?
                 VR.UpdateRequest.ValueInputOptionEnum.RAW :
                 VR.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             return updateReq.Execute();
         }
 
-        public static ValueRange GetValues(string range, SheetsService service)
+        public ValueRange GetValues(string range)
         {
-            var request = service.Spreadsheets.Values.Get(SpreadsheetId, range);
+            var request = Service.Spreadsheets.Values.Get(SpreadsheetId, range);
             var response = request.Execute();
             return response;
         }
-
-        /*            var response = GetValues("page1!A1:B3", service);
-            foreach (var d in response.Values)
-                foreach (var c in d)
-                    Console.WriteLine(".." + c.ToString() + " ");
-            UpdateValues(service, new List<IList<object>> { new List<object> { "123" } }, "page1!B2");
-        */
     }
 }
