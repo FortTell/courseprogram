@@ -65,7 +65,7 @@ namespace UnitTests
         [TestMethod]
         public void PerformanceTest()
         {
-            Program.MakeDocx(File.OpenRead("tests\\course.html"));
+            Program.MakeFirstParsePass(File.OpenRead("tests\\course.html"));
         }
     }
 }

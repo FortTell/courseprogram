@@ -10,7 +10,6 @@ namespace DataClasses
         public string CourseName;
         public string CourseDesc;
         public List<TeacherInfo> Teachers;
-        //public List<(string title, List<string> topics)> Themes;
         public List<DisciplineInfo> Disciplines;
         public int ModuleZe { get => Disciplines.Select(d => d.Ze).Sum(); }
     }

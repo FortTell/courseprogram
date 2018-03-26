@@ -18,7 +18,7 @@ namespace DocxBuilder
         private static void FillEducResults(DocX template, int discId)
         {
             FillModuleEducResTable(template.Tables[3 + TablesInDiscTempl * discId]);
-            FillCompetByDiscTable(template, discId);  
+            FillCompetByDiscTable(template, discId);
         }
 
         private static void FillModuleEducResTable(Table educResTable)
@@ -87,7 +87,7 @@ namespace DocxBuilder
                 var para = row.Cells[1].Paragraphs[0];
                 para.Append(disc.Themes[i].title + (disc.Themes[i].title.EndsWith('.') ? "" : "."));
                 var topics = disc.Themes[i].topics.ToList();
-                for (int k = 0; k < topics.Count / 5.0; k++)
+                for (int k = 0; k < Math.Max(topics.Count / 4.5, 2); k++)
                 {
                     var topic = topics[rnd.Next(0, topics.Count)];
                     row.Cells[2].Paragraphs[0].Append(topic + (topic.EndsWith('.') ? " " : ". "));
@@ -97,32 +97,44 @@ namespace DocxBuilder
         }
         private static void FillHourSpreadTable(DocX template, ParseInfo pi, int discId)
         {
+            var rnd = new Random();
             var table = template.Tables[10 + TablesInDiscTempl * discId];
-            var disc = pi.Disciplines[discId];
-            for (int i = 1; i < disc.Themes.Count; i++)
-                table.InsertRow(table.Rows[4], 4 + i);
-            for (int i = 27; i <= 30; i++)
-                table.MergeCellsInColumn(i, 3, 3 + 1 + disc.Themes.Count);
-            int totalHours = disc.Ze * 36;
-            bool isExam = disc.IsExam;
-            var hoursForSelfWork = totalHours - 34 - (isExam ? 18 : 4);
-            AppendToCell(table, table.RowCount - 1, 2, totalHours.ToString(), 8);
-            AppendToCell(table, table.RowCount - 2, 2, (totalHours - (isExam ? 18 : 4)).ToString(), 8);
-            AppendToCell(table, table.RowCount - 2, 3, "34", 8);
-            AppendToCell(table, table.RowCount - 1, 3, "34", 8);
+            var d = pi.Disciplines[discId];
+            for (int i = 1; i <= d.Themes.Count; i++)
+            {
+                var tShare = rnd.Next((100 / (d.Themes.Count - i)) - 5, (100 / (d.Themes.Count - i)) + 5);
+            }
+            PrepareHourSpreadTable(table, d);
 
-            AppendToCell(table, table.RowCount - 1, (isExam ? 8 : 7), (isExam ? "18" : "4"), 8);
-
-            AppendToCell(table, table.RowCount - 2, 7, hoursForSelfWork.ToString(), 8);
-            AppendToCell(table, table.RowCount - 1, 5, hoursForSelfWork.ToString(), 8);
-
-            for (int i = 0; i < disc.Themes.Count; i++)
+            for (int i = 0; i < d.Themes.Count; i++)
             {
                 var row = table.Rows[4 + i];
                 AppendToCell(table, 4 + i, 0, (i + 1).ToString(), 8);
-                AppendToCell(table, 4 + i, 1, disc.Themes[i].title, 8);
+                AppendToCell(table, 4 + i, 1, d.Themes[i].title, 8);
             }
         }
+        private static void PrepareHourSpreadTable(Table table, DisciplineInfo d)
+        {
+            for (int i = 1; i < d.Themes.Count; i++)
+                table.InsertRow(table.Rows[4], 4 + i);
+            for (int i = 27; i <= 30; i++)
+                table.MergeCellsInColumn(i, 3, 3 + 1 + d.Themes.Count);
+
+            AppendToCell(table, table.RowCount - 1, 2, d.TotalHours.ToString(), 8);
+            AppendToCell(table, table.RowCount - 2, 2, (d.TotalHours - (d.IsExam ? 18 : 4)).ToString(), 8);
+            AppendToCell(table, table.RowCount - 1, 3, d.Hours.practice.ToString(), 8);
+            AppendToCell(table, table.RowCount - 2, 3, d.Hours.practice.ToString(), 8);
+            AppendToCell(table, table.RowCount - 1, 5, (d.Hours.selfWork + d.Hours.seminar).ToString(), 8);
+            AppendToCell(table, table.RowCount - 2, 7, (d.Hours.selfWork + d.Hours.seminar).ToString(), 8);
+
+            AppendToCell(table, table.RowCount - 2, 8, d.Hours.seminar.ToString(), 8);
+            AppendToCell(table, table.RowCount - 2, 10, d.Hours.seminar.ToString(), 8);
+            AppendToCell(table, table.RowCount - 2, 13, d.Hours.selfWork.ToString(), 8);
+            AppendToCell(table, table.RowCount - 2, 14, d.Hours.selfWork.ToString(), 8);
+
+            AppendToCell(table, table.RowCount - 1, (d.IsExam ? 8 : 7), (d.IsExam ? "18" : "4"), 8);
+        }
+
         private static void ReplacePlaceholders(DocX template)
         {
             var paragraphs = template.Paragraphs.Where(p => p.Text != "");
@@ -159,6 +171,7 @@ namespace DocxBuilder
                 { "<MODULE_NAME>", pi.CourseName },
                 { "<DISC_NAME>", pi.CourseName }, //no support for multi-discipline modules yet
                 { "<YEAR>", DateTime.Now.Year.ToString()},
+                { "<M_ZE>", pi.ModuleZe.ToString() },
                 { "<CITY>", "Екатеринбург" },
                 { "<NAME>", "Иванов И.И." },
                 { "<POSITION>", "Искатель интересных историй" },
@@ -166,6 +179,8 @@ namespace DocxBuilder
                 { "<SEMESTER_NO>", "5"},
                 { "<TEST_TYPE>", "экзамен"}
             };
+            for (int i = 0; i < pi.Disciplines.Count; i++)
+                TemplateReplacements.Add("<D" + i + "_ZE>", pi.Disciplines[i].Ze.ToString());
         }
         private static void AppendToCell(Table t, int row, int cell, string text,
             int fontSize = 12, int paragraph = 0)

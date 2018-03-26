@@ -19,6 +19,7 @@ namespace Parsing
         static string[] scopes = { SheetsService.Scope.Spreadsheets };
         static string appName = "123";
         static string SpreadsheetId;
+        public string SheetLink { get => "https://docs.google.com/spreadsheets/d/" + SpreadsheetId; }
         SheetsService Service;
 
         public GSheetParser(string spreadsheetId = "1lTdVIv9qOw8bLmdnALVs0xc5FBhrtiefnKRPPiGmohc")
@@ -27,7 +28,7 @@ namespace Parsing
             Service = ConnectToSheetsSvc();
         }
 
-        public void PasteParseInfoToSheet(ParseInfo pi, int discId)
+        public void PasteInfoToSheet(ParseInfo pi, int discId)
         {
             var valuesToUpd = new List<ValueRange>();
             var disc = pi.Disciplines[discId];
@@ -40,30 +41,34 @@ namespace Parsing
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
                 { disc.Themes.Select(t => String.Join(". ", t.topics)).ToList<object>() },
                 "page1!B8:" + (char)('B' + disc.Themes.Count) + "8"));
-            var bur = new SpreadsheetsResource.ValuesResource.BatchUpdateRequest(Service,
+            var bur = new SpreadsheetsResource.ValuesResource.BatchUpdateRequest(
+                Service,
                 new BatchUpdateValuesRequest
                 {
                     Data = valuesToUpd,
                     ValueInputOption = "USER_ENTERED"
-                }, SpreadsheetId);
+                },
+                SpreadsheetId);
             bur.Execute();
         }
         public ParseInfo ParseInfoFromSheet()
         {
-            var di = GetValues("page1!B3:B6");
+            var dInfo = GetValues("page1!A5:F5");
+            var dName = GetValues("page1!B3");
             var dThemes = GetValues("page1!B7:F8");
             var pi = new ParseInfo
             {
                 CourseName = GetValues("page1!B1").Values[0][0].ToString(),
                 Disciplines = new List<DisciplineInfo> {
-                    new DisciplineInfo
-                    {
-                        Name = di.Values[0][0].ToString(),
-                        Ze = int.Parse(di.Values[1][0].ToString()),
-                        PracticeHours = int.Parse(di.Values[2][0].ToString()),
-                        IsExam = di.Values[3][0].ToString() == "Экзамен",
-                        Themes = GetThemeInfos(dThemes)
-                    }
+                    DisciplineInfo.CreateSecondPassDI(
+                        dName.Values[0][0].ToString(),
+                        int.Parse(dInfo.Values[0][0].ToString()),
+                        (int.Parse(dInfo.Values[0][3].ToString()),
+                            int.Parse(dInfo.Values[0][4].ToString()),
+                            int.Parse(dInfo.Values[0][5].ToString())),
+                        GetThemeInfos(dThemes),
+                        dInfo.Values[0][1].ToString().Contains("Экзамен")
+                    )
                 }
             };
             return pi;
@@ -77,6 +82,7 @@ namespace Parsing
                 FileMode.Open, FileAccess.Read))
             {
                 credential = GoogleCredential.FromStream(stream).CreateScoped(scopes);
+                //new FileDataStore
                 Console.WriteLine("Credential file saved to: " + Path.Combine(credPath, "cred.json"));
             }
 
@@ -98,7 +104,7 @@ namespace Parsing
 
         private List<(string, List<string>)> GetThemeInfos(ValueRange vr)
         {
-            return vr.Values[0].Zip(vr.Values[1], 
+            return vr.Values[0].Zip(vr.Values[1],
                 (ti, to) => (ti.ToString(), to.ToString().Split(". ").ToList())).ToList();
         }
 

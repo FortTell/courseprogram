@@ -4,6 +4,7 @@ using System.IO;
 using DocxBuilder;
 using System.Collections.Generic;
 using DataClasses;
+using System.Diagnostics;
 
 namespace CourseProgram
 {
@@ -12,19 +13,25 @@ namespace CourseProgram
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            //GSheetParser.ConnectToSheet();
-            //Console.ReadLine();
-            MakeDocx(File.OpenRead("course.html"));
+            var gParser = MakeFirstParsePass(File.OpenRead("course.html"));
+            Console.WriteLine("Info from webpage parsed\nLink: " + gParser.SheetLink);
+            //Process.Start(gParser.SheetLink);
+            Console.WriteLine("Press Enter to continue, other to abort");
+            var key = Console.ReadKey();
+            if (!(key.Key == ConsoleKey.Enter))
+                return;
+            else
+                Builder.BuildDocxFromTemplate(gParser.ParseInfoFromSheet(), "template.docx");
         }
 
-        public static void MakeDocx(Stream reader)
+        public static GSheetParser MakeFirstParsePass(Stream reader)
         {
             var parser = new CourseraParser(reader);
             var courseName = parser.GetCourseName();
             var pi = parser.ParseInfoFromWebpage();
             var gParser = new GSheetParser();
-            gParser.PasteParseInfoToSheet(pi, 0);
-            Builder.BuildDocxFromTemplate(gParser.ParseInfoFromSheet(), "template.docx");
+            gParser.PasteInfoToSheet(pi, 0);
+            return gParser;
         }
     }
 }

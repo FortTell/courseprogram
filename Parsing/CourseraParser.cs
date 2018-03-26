@@ -34,7 +34,7 @@ namespace Parsing
                 CourseDesc = GetCourseDesc(),
                 Teachers = GetTeachers(),
                 Disciplines = new List<DisciplineInfo> {
-                    new DisciplineInfo { Name = GetCourseName(), Ze = 3, Themes = GetThemes() }
+                    DisciplineInfo.CreateFirstPassDI(GetCourseName(), GetThemes())
                 }
             };
         }
@@ -100,9 +100,9 @@ namespace Parsing
             var weeks = document.DocumentNode.SelectNodes(".//*[@class = 'week']");
             var weekInfosRaw = GetWeekInfosLinq(weeks);
             var maxToCompress = weekInfosRaw.Count - 5;
-            var totalHeaderLength = weekInfosRaw.Select(k => k.title.Length).Sum();
+            var totalTopicLength = weekInfosRaw.Select(k => k.topics.Sum(t => t.Length)).Sum();
             int i = 0;
-            while (maxToCompress > 0 && weekInfosRaw[i].title.Length < totalHeaderLength / 5)
+            while (maxToCompress > 0 && weekInfosRaw[i].topics.Sum(t => t.Length) < totalTopicLength / 5)
             {
                 maxToCompress--;
                 weekInfosRaw[i] = (weekInfosRaw[i].title + ". " + weekInfosRaw[i + 1].title,
