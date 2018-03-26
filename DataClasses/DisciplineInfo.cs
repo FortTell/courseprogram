@@ -12,13 +12,14 @@ namespace DataClasses
         public (int practice, int seminar, int selfWork) Hours { get; private set; }
         public List<(string title, List<string> topics)> Themes { get; private set; }
         public bool IsExam { get; private set; }
+        public int AttestHours { get => IsExam ? 18 : 4; }
 
         public static DisciplineInfo CreateFirstPassDI(string name, List<(string, List<string>)> themes)
         {
-            return new DisciplineInfo { Name = name, Themes = themes };
+            return new DisciplineInfo { Name = name, Themes = themes, Ze = 0 };
         }
 
-        public static DisciplineInfo CreateSecondPassDI(string name, int ze, (int,int,int) hours, 
+        public static DisciplineInfo CreateSecondPassDI(string name, int ze, (int, int, int) hours, 
             List<(string, List<string>)> themes, bool isExam)
         {
             return new DisciplineInfo

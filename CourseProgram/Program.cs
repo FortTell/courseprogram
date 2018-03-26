@@ -12,7 +12,7 @@ namespace CourseProgram
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            //Console.WriteLine("Hello World!");
             var gParser = MakeFirstParsePass(File.OpenRead("course.html"));
             Console.WriteLine("Info from webpage parsed\nLink: " + gParser.SheetLink);
             //Process.Start(gParser.SheetLink);
@@ -20,8 +20,8 @@ namespace CourseProgram
             var key = Console.ReadKey();
             if (!(key.Key == ConsoleKey.Enter))
                 return;
-            else
-                Builder.BuildDocxFromTemplate(gParser.ParseInfoFromSheet(), "template.docx");
+            Console.WriteLine("Creating document...");
+            Builder.BuildDocxFromTemplate(gParser.ParseInfoFromSheet(), "template.docx");
         }
 
         public static GSheetParser MakeFirstParsePass(Stream reader)

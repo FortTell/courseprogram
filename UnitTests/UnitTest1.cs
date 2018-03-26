@@ -67,5 +67,11 @@ namespace UnitTests
         {
             Program.MakeFirstParsePass(File.OpenRead("tests\\course.html"));
         }
+
+        [TestMethod]
+        public void CheckHourSpreadingForOutliers()
+        {
+
+        }
     }
 }
