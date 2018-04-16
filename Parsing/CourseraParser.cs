@@ -74,10 +74,10 @@ namespace Parsing
             }
             return result;
         }
-
+        
         private TeacherInfo ParseNamePositionAndDegree(HtmlNode node)
         {
-            var npd = node.FirstChild.LastChild.InnerText
+            var npd = Regex.Replace(node.FirstChild.LastChild.InnerText, "[(].*?[)]", "")
                                 .Replace("&nbsp;", "")
                                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                                 .Select(x => x.TrimStart())

@@ -13,7 +13,7 @@ namespace DocxBuilder
     public static class Builder
     {
         public static Dictionary<string, string> TemplateReplacements { get; private set; }
-        public static int TablesInDiscTempl = 10;
+        private static int TablesInDiscTempl = 10;
 
         private static void FillEducResults(DocX template, int discId)
         {

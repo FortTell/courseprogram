@@ -59,19 +59,29 @@ namespace UnitTests
         public void BracketsInNamesAreHandled()
         {
             var parser = new CourseraParser(File.OpenRead("tests\\bracketedNames.html"));
-            Assert.Fail();
+            var teachers = parser.GetTeachers();
+            foreach (var t in teachers)
+            {
+                Assert.IsTrue(!t.name.Contains(')'));
+                Assert.IsTrue(!t.name.Contains('('));
+            };
         }
 
         [TestMethod]
         public void PerformanceTest()
         {
             Program.MakeFirstParsePass(File.OpenRead("tests\\course.html"));
+
         }
 
         [TestMethod]
         public void CheckHourSpreadingForOutliers()
         {
-
+            var themes = new List<(string, List<string>)>();
+            for (int i = 0; i < 5; i++)
+                themes.Add(("t" + i, new List<string> { "st" + i }));
+            var d = DisciplineInfo.CreateSecondPassDI("test", 3, (20, 40, 30), themes, true);
+            
         }
     }
 }

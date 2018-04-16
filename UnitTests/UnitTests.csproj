@@ -20,6 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="client_secret.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="tests\bracketedNames.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
