@@ -28,6 +28,31 @@ namespace Parsing
             Service = ConnectToSheetsSvc();
         }
 
+        public void CopyDiscTemplate(int i)
+        {
+            var src = new GridRange
+            {
+                SheetId = 0,
+                StartColumnIndex = 0,
+                StartRowIndex = 2,
+                EndColumnIndex = 5 + 1,
+                EndRowIndex = 7 + 1
+            };
+            var dst = new GridRange
+            {
+                SheetId = 0,
+                StartColumnIndex = 0, StartRowIndex = 2 + 8 * i,
+                EndColumnIndex = 5 + 1, EndRowIndex = 7 + 2 * i + 1
+            };
+            CopyPasteRequest cpr = new CopyPasteRequest { Source = src, Destination = dst, PasteType = "PASTE_NORMAL" };
+            var busr = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = new List<Request> { new Request { CopyPaste = cpr } },
+            };
+            var r = new SpreadsheetsResource.BatchUpdateRequest(Service, busr, SpreadsheetId);
+            r.Execute();
+        }
+
         public void PasteInfoToSheet(ParseInfo pi, int discId)
         {
             var valuesToUpd = new List<ValueRange>();
@@ -41,7 +66,7 @@ namespace Parsing
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
                 { disc.Themes.Select(t => String.Join(". ", t.topics)).ToList<object>() },
                 "page1!B8:" + (char)('B' + disc.Themes.Count) + "8"));
-            var bur = new SpreadsheetsResource.ValuesResource.BatchUpdateRequest(
+            var bur = new VR.BatchUpdateRequest(
                 Service,
                 new BatchUpdateValuesRequest
                 {

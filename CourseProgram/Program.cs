@@ -12,10 +12,12 @@ namespace CourseProgram
     {
         static void Main(string[] args)
         {
-            //Console.WriteLine("Hello World!");
             var gParser = MakeFirstParsePass(File.OpenRead("course.html"));
             Console.WriteLine("Info from webpage parsed\nLink: " + gParser.SheetLink);
-            //Process.Start(gParser.SheetLink);
+            var p = new Process();
+            p.StartInfo.UseShellExecute = true;
+            p.StartInfo.FileName = gParser.SheetLink;
+            p.Start();
             Console.WriteLine("Press Enter to continue, other to abort");
             var key = Console.ReadKey();
             if (!(key.Key == ConsoleKey.Enter))
@@ -30,6 +32,7 @@ namespace CourseProgram
             var courseName = parser.GetCourseName();
             var pi = parser.ParseInfoFromWebpage();
             var gParser = new GSheetParser();
+            //gParser.CopyDiscTemplate(1);
             gParser.PasteInfoToSheet(pi, 0);
             return gParser;
         }

@@ -20,7 +20,6 @@ namespace DocxBuilder
             FillModuleEducResTable(template.Tables[3 + TablesInDiscTempl * discId]);
             FillCompetByDiscTable(template, discId);
         }
-
         private static void FillModuleEducResTable(Table educResTable)
         {
             var rnd = new Random();
@@ -73,11 +72,10 @@ namespace DocxBuilder
             }
             SetTableBorder(cbdTable);
         }
-        private static void FillDiscContentTable(DocX template, ParseInfo pi, int discId)
+
+        private static void FillDiscContentTable(Table dcTable, DisciplineInfo disc)
         {
             var rnd = new Random();
-            var disc = pi.Disciplines[discId];
-            var dcTable = template.Tables[9 + TablesInDiscTempl * discId];
             for (int i = 0; i < 5; i++)
             {
                 dcTable.InsertRow();
@@ -100,8 +98,8 @@ namespace DocxBuilder
         {
             var d = pi.Disciplines[discId];
             var hours = SpreadHours(d);
-            FillDiscSizeTable(template, d, discId);
-            FillHourSpreadTable(template, d, discId, hours);
+            FillDiscSizeTable(template.Tables[8 + TablesInDiscTempl * discId], d);
+            FillHourSpreadTable(template.Tables[10 + TablesInDiscTempl * discId], d, hours);
         }
         private static (int, int, int)[] SpreadHours(DisciplineInfo d)
         {
@@ -122,9 +120,8 @@ namespace DocxBuilder
                 d.Hours.selfWork - hours.Sum(h => h.Item3));
             return hours;
         }
-        private static void FillDiscSizeTable(DocX template, DisciplineInfo d, int discId)
+        private static void FillDiscSizeTable(Table table, DisciplineInfo d)
         {
-            var table = template.Tables[8 + TablesInDiscTempl * discId];
             var contactHrs = 0d;
             AppendToCell(table, 2, 2, d.Hours.practice);
             AppendToCell(table, 2, 3, d.Hours.practice);
@@ -146,11 +143,9 @@ namespace DocxBuilder
             AppendToCell(table, 8, 3, contactHrs.ToString());
             AppendToCell(table, 8, 4, d.TotalHours);
         }
-        private static void FillHourSpreadTable(DocX template, DisciplineInfo d, int discId,
+        private static void FillHourSpreadTable(Table table, DisciplineInfo d,
             (int pra, int sem, int swk)[] hours)
         {
-            var table = template.Tables[10 + TablesInDiscTempl * discId];
-
             PrepareHourSpreadTable(table, d);
             var spentHours = new int[3];
             for (int i = 0; i < d.Themes.Count; i++)
@@ -216,9 +211,14 @@ namespace DocxBuilder
             {
                 for (int i = 0; i < pi.Disciplines.Count; i++)
                 {
-                    d.InsertDocument(DocX.Load("disc_template.docx"));
+                    var disc = pi.Disciplines[i];
+                    using (var t = DocX.Load("disc_template.docx"))
+                    {
+                        AddDiscIdToTemplate(t, i);
+                        d.InsertDocument(t);
+                    }
                     FillEducResults(d, i);
-                    FillDiscContentTable(d, pi, i);
+                    FillDiscContentTable(d.Tables[9 + TablesInDiscTempl * i], disc);
                     FillHourTables(d, pi, i);
                 }
                 ReplacePlaceholders(d);
@@ -226,13 +226,24 @@ namespace DocxBuilder
             }
         }
 
+        private static void AddDiscIdToTemplate(DocX d, int discId)
+        {
+            var paragraphs = d.Paragraphs.Where(p => p.Text != "");
+            var templates = TemplateReplacements
+                .Where(tr => tr.Key.Contains("<D" + discId))
+                .Select(tr => new KeyValuePair<string, string> 
+                    (new string(tr.Key.Where(c => !char.IsDigit(c)).ToArray()), tr.Key));
+            foreach (var p in paragraphs)
+                foreach (var repl in templates)
+                    p.ReplaceText(repl.Key, repl.Value);
+        }
+
         private static void LoadReplacements(ParseInfo pi)
         {
 
             TemplateReplacements = new Dictionary<string, string>
             {
-                { "<MODULE_NAME>", pi.CourseName },
-                { "<DISC_NAME>", pi.CourseName }, //no support for multi-discipline modules yet
+                { "<M_NAME>", pi.CourseName },
                 { "<YEAR>", DateTime.Now.Year.ToString()},
                 { "<M_ZE>", pi.ModuleZe.ToString() },
                 { "<CITY>", "Екатеринбург" },
@@ -240,10 +251,13 @@ namespace DocxBuilder
                 { "<POSITION>", "Искатель интересных историй" },
                 { "<UNIVERSITY_NAME>", "ВУЗ им. Иванова И.И." },
                 { "<SEMESTER_NO>", "5"},
-                { "<TEST_TYPE>", "экзамен"}
             };
             for (int i = 0; i < pi.Disciplines.Count; i++)
+            {
+                TemplateReplacements.Add("<D" + i + "_NAME>", pi.Disciplines[i].Name);
                 TemplateReplacements.Add("<D" + i + "_ZE>", pi.Disciplines[i].Ze.ToString());
+                TemplateReplacements.Add("<D" + i + "_TEST>", pi.Disciplines[i].IsExam ? "экзамен" : "зачёт");
+            }
         }
         private static void AppendToCell(Table t, int row, int cell, int value,
             int fontSize = 12, int paragraph = 0)
