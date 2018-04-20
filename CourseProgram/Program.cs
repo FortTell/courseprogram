@@ -12,29 +12,29 @@ namespace CourseProgram
     {
         static void Main(string[] args)
         {
-            var gParser = MakeFirstParsePass(File.OpenRead("course.html"));
-            Console.WriteLine("Info from webpage parsed\nLink: " + gParser.SheetLink);
+            var gHandler = MakeFirstParsePass(File.OpenRead("course.html"));
+            Console.WriteLine("Info from webpage parsed\nLink: " + gHandler.SheetLink);
             var p = new Process();
             p.StartInfo.UseShellExecute = true;
-            p.StartInfo.FileName = gParser.SheetLink;
+            p.StartInfo.FileName = gHandler.SheetLink;
             p.Start();
             Console.WriteLine("Press Enter to continue, other to abort");
             var key = Console.ReadKey();
             if (!(key.Key == ConsoleKey.Enter))
                 return;
             Console.WriteLine("Creating document...");
-            Builder.BuildDocxFromTemplate(gParser.ParseInfoFromSheet(), "template.docx");
+            Builder.BuildDocxFromTemplate(gHandler.Parser.ParseInfoFromSheet(), "template.docx");
         }
 
-        public static GSheetParser MakeFirstParsePass(Stream reader)
+        public static GSheetApiHandler MakeFirstParsePass(Stream reader)
         {
             var parser = new CourseraParser(reader);
             var courseName = parser.GetCourseName();
             var pi = parser.ParseInfoFromWebpage();
-            var gParser = new GSheetParser();
-            //gParser.CopyDiscTemplate(1);
-            gParser.PasteInfoToSheet(pi, 0);
-            return gParser;
+            var gHandler = new GSheetApiHandler();
+            gHandler.InitParser();
+            gHandler.Parser.PrepareInfoToPasteToSheet(pi, 0);
+            return gHandler;
         }
     }
 }
