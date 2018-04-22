@@ -39,7 +39,6 @@ namespace Parsing
                 FileMode.Open, FileAccess.Read))
                 credential = GoogleCredential.FromStream(stream).CreateScoped(scopes);
 
-            // Create Google Sheets API service.
             var service = new SheetsService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
@@ -54,7 +53,7 @@ namespace Parsing
                 Service,
                 new BatchUpdateValuesRequest
                 {
-                    Data = Parser.PrepareInfoToPasteToSheet(pi, discId),
+                    Data = Parser.PrepareInfoForPasting(pi, discId),
                     ValueInputOption = "USER_ENTERED"
                 },
                 SpreadsheetId);

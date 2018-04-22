@@ -23,7 +23,7 @@ namespace Parsing
             Handler = handler;
         }
 
-        public List<ValueRange> PrepareInfoToPasteToSheet(ParseInfo pi, int discId)
+        public List<ValueRange> PrepareInfoForPasting(ParseInfo pi, int discId)
         {
             var valuesToUpd = new List<ValueRange>();
             var disc = pi.Disciplines[discId];

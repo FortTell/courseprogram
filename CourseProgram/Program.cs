@@ -12,6 +12,7 @@ namespace CourseProgram
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Program started.");
             var gHandler = MakeFirstParsePass(File.OpenRead("course.html"));
             Console.WriteLine("Info from webpage parsed\nLink: " + gHandler.SheetLink);
             var p = new Process();
@@ -33,7 +34,7 @@ namespace CourseProgram
             var pi = parser.ParseInfoFromWebpage();
             var gHandler = new GSheetApiHandler();
             gHandler.InitParser();
-            gHandler.Parser.PrepareInfoToPasteToSheet(pi, 0);
+            gHandler.Parser.PrepareInfoForPasting(pi, 0);
             return gHandler;
         }
     }

@@ -15,10 +15,10 @@ namespace DocxBuilder
         public static Dictionary<string, string> TemplateReplacements { get; private set; }
         private static int TablesInDiscTempl = 10;
 
-        private static void FillEducResults(DocX template, int discId)
+        private static void FillEducResults(DocX template, ParseInfo pi, int discId)
         {
             FillModuleEducResTable(template.Tables[3 + TablesInDiscTempl * discId]);
-            FillCompetByDiscTable(template, discId);
+            FillCompetByDiscTable(template, pi, discId);
         }
         private static void FillModuleEducResTable(Table educResTable)
         {
@@ -54,10 +54,11 @@ namespace DocxBuilder
                 SetTableBorder(educResTable);
             }
         }
-        private static void FillCompetByDiscTable(DocX template, int discId)
+        private static void FillCompetByDiscTable(DocX template, ParseInfo pi, int discId)
         {
             var erTable = template.Tables[3 + TablesInDiscTempl * discId];
             var cbdTable = template.Tables[4 + TablesInDiscTempl * discId];
+            var rnd = new Random();
             var competences = erTable.Rows.Skip(1).SelectMany(r => r.Cells[2].Paragraphs)
                 .OrderBy(p => p.Text.Split('-')[0])
                 .ThenBy(p => int.Parse(p.Text.Split(new char[] { '-', ' ' })[1]))
@@ -67,9 +68,23 @@ namespace DocxBuilder
             {
                 cbdTable.InsertColumn();
                 cbdTable.Rows[0].Cells[1 + i].Paragraphs[0].Append(competCodes[i]).Bold();
-                cbdTable.Rows[1].Cells[2 + i].Paragraphs[0].Append("*").Bold().Alignment = Alignment.center;
-                template.Lists[4].Items[2].AppendLine(competences[i].Text).FontSize(12); //*///
+                template.Lists[4].Items[2].AppendLine(competences[i].Text).FontSize(12);
             }
+            for (int i = 0; i < pi.Disciplines.Count; i++)
+            {
+                cbdTable.InsertRow(cbdTable.Rows[cbdTable.RowCount - 1]);
+                AppendToCell(cbdTable, 1 + i, 0, 1 + i);
+                AppendToCell(cbdTable, 1 + i, 1, "(ВС) <D" + i + "_NAME>");
+                var leftCompets = Enumerable.Range(0, Math.Min(8, competCodes.Count)).ToList();
+                for (int j = 0; j < Math.Min(8, competCodes.Count) / (double)pi.Disciplines.Count; j++)
+                {
+                    var nextCompet = rnd.Next(0, leftCompets.Count);
+                    cbdTable.Rows[1 + i].Cells[2 + leftCompets[nextCompet]].Paragraphs[0]
+                        .Append("*").Bold().Alignment = Alignment.center;
+                    leftCompets.RemoveAt(nextCompet);
+                }                
+            }
+            cbdTable.RemoveRow();
             SetTableBorder(cbdTable);
         }
 
@@ -98,6 +113,7 @@ namespace DocxBuilder
         {
             var d = pi.Disciplines[discId];
             var hours = SpreadHours(d);
+            FillModuleDiscSizeTable(template.Tables[1], pi);
             FillDiscSizeTable(template.Tables[8 + TablesInDiscTempl * discId], d);
             FillHourSpreadTable(template.Tables[10 + TablesInDiscTempl * discId], d, hours);
         }
@@ -119,6 +135,29 @@ namespace DocxBuilder
                 d.Hours.seminar - hours.Sum(h => h.Item2),
                 d.Hours.selfWork - hours.Sum(h => h.Item3));
             return hours;
+        }
+        private static void FillModuleDiscSizeTable(Table table, ParseInfo pi)
+        {
+            for (int i = 0; i < pi.Disciplines.Count; i++)
+            {
+                var d = pi.Disciplines[i];
+                table.InsertRow(table.Rows[table.RowCount - 2], table.RowCount - 2);
+                AppendToCell(table, 3 + i, 0, 1 + i);
+                AppendToCell(table, 3 + i, 1, "(ВС) " + d.Name);
+                AppendToCell(table, 3 + i, 4, d.Hours.practice);
+                AppendToCell(table, 3 + i, 6, d.Hours.practice);
+                AppendToCell(table, 3 + i, 7, d.Hours.selfWork + d.Hours.seminar);
+                AppendToCell(table, 3 + i, 8, d.AttestHours);
+                AppendToCell(table, 3 + i, 9, d.TotalHours);
+                AppendToCell(table, 3 + i, 10, d.Ze);
+            }
+            table.RemoveRow(table.RowCount - 2);
+            AppendToCell(table, 3 + pi.Disciplines.Count, 2, pi.Disciplines.Sum(d => d.Hours.practice));
+            AppendToCell(table, 3 + pi.Disciplines.Count, 4, pi.Disciplines.Sum(d => d.Hours.practice));
+            AppendToCell(table, 3 + pi.Disciplines.Count, 5, pi.Disciplines.Sum(d => d.Hours.practice));
+            AppendToCell(table, 3 + pi.Disciplines.Count, 6, pi.Disciplines.Sum(d => d.AttestHours));
+            AppendToCell(table, 3 + pi.Disciplines.Count, 7, pi.Disciplines.Sum(d => d.TotalHours));
+            AppendToCell(table, 3 + pi.Disciplines.Count, 8, pi.Disciplines.Sum(d => d.Ze));
         }
         private static void FillDiscSizeTable(Table table, DisciplineInfo d)
         {
@@ -147,7 +186,6 @@ namespace DocxBuilder
             (int pra, int sem, int swk)[] hours)
         {
             PrepareHourSpreadTable(table, d);
-            var spentHours = new int[3];
             for (int i = 0; i < d.Themes.Count; i++)
             {
                 var row = table.Rows[4 + i];
@@ -217,7 +255,7 @@ namespace DocxBuilder
                         AddDiscIdToTemplate(t, i);
                         d.InsertDocument(t);
                     }
-                    FillEducResults(d, i);
+                    FillEducResults(d, pi, i);
                     FillDiscContentTable(d.Tables[9 + TablesInDiscTempl * i], disc);
                     FillHourTables(d, pi, i);
                 }
@@ -231,7 +269,7 @@ namespace DocxBuilder
             var paragraphs = d.Paragraphs.Where(p => p.Text != "");
             var templates = TemplateReplacements
                 .Where(tr => tr.Key.Contains("<D" + discId))
-                .Select(tr => new KeyValuePair<string, string> 
+                .Select(tr => new KeyValuePair<string, string>
                     (new string(tr.Key.Where(c => !char.IsDigit(c)).ToArray()), tr.Key));
             foreach (var p in paragraphs)
                 foreach (var repl in templates)
