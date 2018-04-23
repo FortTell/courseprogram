@@ -30,11 +30,10 @@ namespace CourseProgram
         public static GSheetApiHandler MakeFirstParsePass(Stream reader)
         {
             var parser = new CourseraParser(reader);
-            var courseName = parser.GetCourseName();
             var pi = parser.ParseInfoFromWebpage();
             var gHandler = new GSheetApiHandler();
             gHandler.InitParser();
-            gHandler.Parser.PrepareInfoForPasting(pi, 0);
+            gHandler.PasteInfoToSheet(pi, 0);
             return gHandler;
         }
     }

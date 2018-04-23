@@ -30,12 +30,13 @@ namespace Parsing
             var courseName = new List<IList<object>> { new List<object> { pi.CourseName } };
             valuesToUpd.Add(PrepareVR(courseName, "page1!B1"));
             valuesToUpd.Add(PrepareVR(courseName, "page1!B3"));
+            var discStartRow = 7 + discId * 6;
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
                 { disc.Themes.Select(t => t.title).ToList<object>()},
-                "page1!B7:" + (char)('B' + disc.Themes.Count) + "7"));
+                "page1!B" + discStartRow + ":" + (char)('B' + disc.Themes.Count) + discStartRow));
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
                 { disc.Themes.Select(t => String.Join(". ", t.topics)).ToList<object>() },
-                "page1!B8:" + (char)('B' + disc.Themes.Count) + "8"));
+                "page1!B" + (discStartRow + 1) + ":" + (char)('B' + disc.Themes.Count) + (discStartRow + 1)));
             return valuesToUpd;
         }
 

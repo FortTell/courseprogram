@@ -31,7 +31,7 @@ namespace Parsing
             Parser = new GSheetParser(this);
         }
 
-        public SheetsService ConnectToSheetsSvc()
+        private SheetsService ConnectToSheetsSvc()
         {
             GoogleCredential credential;
             string credPath = Path.Combine(new DirectoryInfo(System.Environment.CurrentDirectory).Parent.FullName, "Parsing");
