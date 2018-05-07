@@ -260,6 +260,7 @@ namespace DocxBuilder
                 if (rnd.NextDouble() < 0.7) AppendToCell(table, 2 + i, 7, "*");
                 if (rnd.NextDouble() < 0.5) AppendToCell(table, 2 + i, 8, "*");
             }
+            table.RemoveRow();
         }
 
         private static void ReplacePlaceholders(DocX template)

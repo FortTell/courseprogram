@@ -17,6 +17,7 @@ namespace Parsing
         Regex titleSplitRe = new Regex("[а-я][А-Я]");
         Regex degreeRe = new Regex(@"([Дд]октор)|([Кк]андидат).*наук");
         Regex attestRe = new Regex(@"([Зз]ач[её]т)|([Ээ]кзамен)");
+        Regex videoTopicRe = new Regex(@"ideo: .*?[^ (][A-Z]");
         #endregion
 
         HtmlDocument document;
@@ -43,7 +44,7 @@ namespace Parsing
         {
             var name = document.DocumentNode.SelectSingleNode("/html/head/meta[@property = 'og:title']")
                 .GetAttributeValue("content", "")
-                .Split(" (")[0];
+                .Split(" (")[0].Split(" |")[0];
             return name;
         }
 
@@ -74,7 +75,7 @@ namespace Parsing
             }
             return result;
         }
-        
+
         private TeacherInfo ParseNamePositionAndDegree(HtmlNode node)
         {
             var npd = Regex.Replace(node.FirstChild.LastChild.InnerText, "[(].*?[)]", "")
@@ -99,15 +100,20 @@ namespace Parsing
         {
             var weeks = document.DocumentNode.SelectNodes(".//*[@class = 'week']");
             var weekInfosRaw = GetWeekInfosLinq(weeks);
-            var maxToCompress = weekInfosRaw.Count - 5;
+            var leftToCompress = weekInfosRaw.Count - 5;
             var totalTopicLength = weekInfosRaw.Select(k => k.topics.Sum(t => t.Length)).Sum();
             int i = 0;
-            while (maxToCompress > 0 && weekInfosRaw[i].topics.Sum(t => t.Length) < totalTopicLength / 5)
+            while (true)
             {
-                maxToCompress--;
-                weekInfosRaw[i] = (weekInfosRaw[i].title + ". " + weekInfosRaw[i + 1].title,
-                    weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
-                weekInfosRaw.RemoveAt(i + 1);
+                while (leftToCompress > 0 && weekInfosRaw[i].topics.Sum(t => t.Length) < totalTopicLength / 5)
+                {
+                    leftToCompress--;
+                    weekInfosRaw[i] = (weekInfosRaw[i].title + ". " + weekInfosRaw[i + 1].title,
+                        weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
+                    weekInfosRaw.RemoveAt(i + 1);
+                }
+                if (leftToCompress == 0)
+                    break;
                 i++;
             }
             return weekInfosRaw;
@@ -115,13 +121,23 @@ namespace Parsing
 
         private List<(string title, List<string> topics)> GetWeekInfosLinq(HtmlNodeCollection weeks)
         {
+            string parsingPath = Path.Combine(new DirectoryInfo(System.Environment.CurrentDirectory).Parent.FullName, "Parsing");
+            var antiDict = File.ReadAllLines(Path.Combine(parsingPath, "AntiDictionary.txt"));
             return weeks
+                .SelectMany(w => w.LastChild.ChildNodes)
+                .Select(w => (w.ChildNodes[0].InnerText,
+                    videoTopicRe.Matches(w.InnerText)
+                        .Select(m => m.Value.Substring(6, m.Value.Length - 7))
+                        .Where(s => !antiDict.Any(antiWord => s.IndexOf(antiWord, StringComparison.OrdinalIgnoreCase) >= 0))
+                        .ToList()))
+                .Where(tup => !(attestRe.IsMatch(tup.Item1))).ToList();
+            /*return weeks
                 .Select(w => w.LastChild.LastChild)
                 .Select(w => (w.ChildNodes[0].InnerText,
                     w.ChildNodes[1].InnerText.Split("More")[0]
                     .Replace('\t', ' ').Split(". ").ToList()))
                 .Where(tup => !(attestRe.IsMatch(tup.Item1))).ToList()
-                .ToList();
+                .ToList();*/
         }
     }
 }
