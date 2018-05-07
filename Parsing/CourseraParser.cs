@@ -44,7 +44,7 @@ namespace Parsing
         {
             var name = document.DocumentNode.SelectSingleNode("/html/head/meta[@property = 'og:title']")
                 .GetAttributeValue("content", "")
-                .Split(" (")[0].Split(" |")[0];
+                .Split(new string[] { " (", " |" }, StringSplitOptions.None)[0];
             return name;
         }
 
@@ -121,8 +121,7 @@ namespace Parsing
 
         private List<(string title, List<string> topics)> GetWeekInfosLinq(HtmlNodeCollection weeks)
         {
-            string parsingPath = Path.Combine(new DirectoryInfo(System.Environment.CurrentDirectory).Parent.FullName, "Parsing");
-            var antiDict = File.ReadAllLines(Path.Combine(parsingPath, "AntiDictionary.txt"));
+            var antiDict = File.ReadAllLines("AntiDictionary.txt");
             return weeks
                 .SelectMany(w => w.LastChild.ChildNodes)
                 .Select(w => (w.ChildNodes[0].InnerText,

@@ -15,7 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.32.2.1155" />
+    <PackageReference Include="CommandLineParser" Version="2.2.1" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.33.0.1211" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="competence.docx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="course_multi_week.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

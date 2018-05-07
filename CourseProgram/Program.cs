@@ -7,6 +7,7 @@ using DataClasses;
 using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace CourseProgram
 {
@@ -15,6 +16,7 @@ namespace CourseProgram
         static void Main(string[] args)
         {
             Console.WriteLine("Program started.");
+            Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
             GSheetApiHandler gHandler = PrepareHandlerAndMakeFirstPass("https://www.coursera.org/learn/naychnie-teksti", true);
             Console.WriteLine("Info from webpage parsed\nLink: " + gHandler.SheetLink);
             var p = new Process();

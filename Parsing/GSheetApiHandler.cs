@@ -34,9 +34,7 @@ namespace Parsing
         private SheetsService ConnectToSheetsSvc()
         {
             GoogleCredential credential;
-            string credPath = Path.Combine(new DirectoryInfo(System.Environment.CurrentDirectory).Parent.FullName, "Parsing");
-            using (var stream = new FileStream(Path.Combine(credPath, "client_secret.json"),
-                FileMode.Open, FileAccess.Read))
+            using (var stream = new FileStream("client_secret.json", FileMode.Open, FileAccess.Read))
                 credential = GoogleCredential.FromStream(stream).CreateScoped(scopes);
 
             var service = new SheetsService(new BaseClientService.Initializer()
