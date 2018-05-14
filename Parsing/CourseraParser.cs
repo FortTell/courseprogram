@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using DataClasses;
 
-
 namespace Parsing
 {
     public class CourseraParser
@@ -102,9 +101,7 @@ namespace Parsing
             var weekInfosRaw = GetWeekInfosLinq(weeks);
             var leftToCompress = weekInfosRaw.Count - 5;
             var totalTopicLength = weekInfosRaw.Select(k => k.topics.Sum(t => t.Length)).Sum();
-            int i = 0;
-            while (true)
-            {
+            for (int i = 0; leftToCompress > 0; i++)
                 while (leftToCompress > 0 && weekInfosRaw[i].topics.Sum(t => t.Length) < totalTopicLength / 5)
                 {
                     leftToCompress--;
@@ -112,10 +109,6 @@ namespace Parsing
                         weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
                     weekInfosRaw.RemoveAt(i + 1);
                 }
-                if (leftToCompress == 0)
-                    break;
-                i++;
-            }
             return weekInfosRaw;
         }
 

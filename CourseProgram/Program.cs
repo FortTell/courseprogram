@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using CommandLine;
 
 namespace CourseProgram
 {
@@ -15,9 +16,7 @@ namespace CourseProgram
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Program started.");
-            Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-            GSheetApiHandler gHandler = PrepareHandlerAndMakeFirstPass("https://www.coursera.org/learn/naychnie-teksti", true);
+            var gHandler = InitProgram(args);
             Console.WriteLine("Info from webpage parsed\nLink: " + gHandler.SheetLink);
             var p = new Process();
             p.StartInfo.UseShellExecute = true;
@@ -29,6 +28,34 @@ namespace CourseProgram
                 return;
             Console.WriteLine("Creating document...");
             Builder.BuildDocxFromTemplate(gHandler.Parser.ParseInfoFromSheet(), "template.docx");
+        }
+
+        private static GSheetApiHandler InitProgram(string[] args)
+        {
+            Console.WriteLine("Program started.");
+            Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+
+            string handlerStr = "";
+            bool isURL = false;
+            var cliOpt = Parser.Default.ParseArguments<CliOptions>(args);
+            try
+            {
+                cliOpt.MapResult<CliOptions, int>(cli =>
+                {
+                    if (!(cli.Filename == null ^ cli.WebLink == null))
+                        throw new ArgumentException("Please specify exactly one of the -f, -l params.");
+                    handlerStr = cli.Filename ?? cli.WebLink;
+                    isURL = cli.Filename == null;
+                    return 0;
+                }, _ => throw new ArgumentException("Cannot parse command line args to work, exiting."));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
+            return PrepareHandlerAndMakeFirstPass(handlerStr, isURL);
         }
 
         private static GSheetApiHandler PrepareHandlerAndMakeFirstPass(string source, bool sourceIsWeblink)
