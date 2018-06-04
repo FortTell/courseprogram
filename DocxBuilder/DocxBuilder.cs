@@ -100,7 +100,7 @@ namespace DocxBuilder
                 var para = row.Cells[1].Paragraphs[0];
                 para.Append(disc.Themes[i].title + (disc.Themes[i].title.EndsWith('.') ? "" : "."));
                 var topics = disc.Themes[i].topics.ToList();
-                for (int k = 0; k < Math.Max(topics.Count / 4.5, 2); k++)
+                for (int k = 0; k < Math.Max(topics.Count / 4.5, 1); k++)
                 {
                     var topic = topics[rnd.Next(0, topics.Count)];
                     row.Cells[2].Paragraphs[0].Append(topic + (topic.EndsWith('.') ? " " : ". "));
@@ -279,6 +279,8 @@ namespace DocxBuilder
 
             using (var d = DocX.Load(templateFilename))
             {
+                d.Lists[1].Items[1].InsertText(pi.Disciplines.Count > 1 ? "" : "ы" +
+                    String.Join(", ", pi.Disciplines.Select(disc => "«" + disc.Name + "»")));
                 for (int i = 0; i < pi.Disciplines.Count; i++)
                 {
                     var disc = pi.Disciplines[i];

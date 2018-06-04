@@ -35,7 +35,7 @@ namespace Parsing
                 { disc.Themes.Select(t => t.title).ToList<object>()},
                 "page1!B" + discStartRow + ":" + (char)('B' + disc.Themes.Count) + discStartRow));
             valuesToUpd.Add(PrepareVR(new List<IList<object>>
-                { disc.Themes.Select(t => String.Join(". ", t.topics)).ToList<object>() },
+                { disc.Themes.Select(t => String.Join('\n', t.topics)).ToList<object>() },
                 "page1!B" + (discStartRow + 1) + ":" + (char)('B' + disc.Themes.Count) + (discStartRow + 1)));
             return valuesToUpd;
         }
@@ -66,7 +66,7 @@ namespace Parsing
         private List<(string, List<string>)> GetThemeInfos(ValueRange vr)
         {
             return vr.Values[0].Zip(vr.Values[1],
-                (ti, to) => (ti.ToString(), to.ToString().Split(". ").ToList())).ToList();
+                (ti, to) => (ti.ToString(), to.ToString().Split('\n').ToList())).ToList();
         }
 
         public ValueRange PrepareVR(List<IList<object>> updatedValues, string range, bool pasteInRows = true)

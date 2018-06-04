@@ -109,6 +109,9 @@ namespace Parsing
                         weekInfosRaw[i].topics.Concat(weekInfosRaw[i + 1].topics).ToList());
                     weekInfosRaw.RemoveAt(i + 1);
                 }
+            for (int i = 0; i< weekInfosRaw.Count; i++)
+                if (weekInfosRaw[i].topics.Count == 0)
+                    weekInfosRaw[i].topics.Add(weekInfosRaw[i].title);
             return weekInfosRaw;
         }
 
@@ -119,7 +122,7 @@ namespace Parsing
                 .SelectMany(w => w.LastChild.ChildNodes)
                 .Select(w => (w.ChildNodes[0].InnerText,
                     videoTopicRe.Matches(w.InnerText)
-                        .Select(m => m.Value.Substring(6, m.Value.Length - 7))
+                        .Select(m => m.Value.Substring(6, m.Value.Length - 7).Replace("&quot", "\""))
                         .Where(s => !antiDict.Any(antiWord => s.IndexOf(antiWord, StringComparison.OrdinalIgnoreCase) >= 0))
                         .ToList()))
                 .Where(tup => !(attestRe.IsMatch(tup.Item1))).ToList();
